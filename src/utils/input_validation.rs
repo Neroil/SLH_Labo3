@@ -1,17 +1,37 @@
+use casbin::function_map::regex_match;
 use derive_more::derive::Display;
 use serde::{Deserialize, Serialize};
 use thiserror::Error;
+use zxcvbn::Score::Three;
+
+extern crate zxcvbn;
+
 
 
 /// This function checks if the given password is valid
 /// Returns true if the password is strong enough, false otherwise
 fn password_validation(password: &str, username: &str) -> bool {
-    todo!()
+    //TODO: Implement password validation
+    let estimated_strength = zxcvbn::zxcvbn(password, &[username]);
+    estimated_strength.score() >= Three //Hope this works lol
 }
 
 /// Interactively prompts the user for a password
 pub fn password_input_validation(username: &str) -> String {
-    todo!()
+    //TODO: Implement password input validation
+    loop {
+        eprintln!("Please enter a password.");
+        let password = inquire::Password::new("Enter your password: ")
+            .with_display_mode(inquire::PasswordDisplayMode::Masked)
+            .prompt()
+            .unwrap();
+
+        if password_validation(&password, username) {
+            return password;
+        } else {
+            eprintln!("Password is too weak. Please try again.");
+        }
+    }
 }
 
 #[derive(Debug, Clone, Copy, Display, Error)]
@@ -46,11 +66,27 @@ impl AsRef<str> for Username {
 }
 
 fn username_validation(username: &str) -> Result<(), InvalidInput> {
-    todo!()
+    //TODO
+    if username.len() < 3 || username.len() > 30 || regex_match(r"^[a-zA-Z0-9_-]+$",username){
+        return Err(InvalidInput);
+    }
+    Ok(())
 }
 
 pub fn username_input_validation(message: &str) -> Result<Username, InvalidInput> {
-    todo!()
+    //TODO
+    loop {
+        let username = inquire::Text::new(message)
+            .prompt()
+            .unwrap();
+
+        if username_validation(&username).is_ok() {
+            return username.try_into();
+        } else {
+            eprintln!("Invalid username. Please try again. \
+            \nUsername must be between 3 and 30 characters long and can only contain letters, numbers, underscores and hyphens.");
+        }
+    }
 }
 
 /// Wrapper type for an AVS number that has been validated
