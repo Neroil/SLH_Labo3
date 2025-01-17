@@ -1,0 +1,25 @@
+# Ignorer les fichiers binaires générés
+/target
+**/*.rs.bk
+
+# Ignorer les fichiers de configuration de l'éditeur
+/.idea/
+/.vscode/
+/*.swp
+*.sublime-project
+*.sublime-workspace
+
+# Ignorer les fichiers de logs
+*.log
+
+# Ignorer les fichiers de compilation
+*.o
+*.so
+*.dylib
+*.dll
+
+# Ignorer les fichiers de test
+/tests/output
+
+# Ignorer les fichiers de dépendances
+Cargo.lock
