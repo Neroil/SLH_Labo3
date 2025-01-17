@@ -1,9 +1,6 @@
 //! Hachage et vérification des mots de passe
 
-use argon2::{
-    password_hash::{rand_core::OsRng, PasswordHashString, PasswordVerifier, SaltString},
-    Argon2, PasswordHasher,
-};
+use argon2::{password_hash::{rand_core::OsRng, PasswordHashString, PasswordVerifier, SaltString}, Argon2, PasswordHash, PasswordHasher};
 use derive_more::derive::Display;
 use serde::{Deserialize, Serialize};
 use std::{str::FromStr, sync::LazyLock};
@@ -41,7 +38,10 @@ impl<'de> Deserialize<'de> for PWHash {
 
 /// Calcule un haché a partir d'un mot de passe en clair, en choisissant un sel au hasard
 pub fn hash(password: &str) -> PWHash {
-    todo!()
+    //TODO
+    let salt = SaltString::generate(&mut OsRng);
+    
+    PWHash(DEFAULT_HASHER.hash_password(password.as_bytes(), &salt).unwrap().serialize())
 }
 
 /// Vérifie si le mot de passe correspond au hash stocké.
@@ -50,5 +50,25 @@ pub fn hash(password: &str) -> PWHash {
 /// le mot de passe avec un faux hash pour éviter une timing
 /// attack.
 pub fn verify(password: &str, maybe_hash: Option<&PWHash>) -> bool {
-    todo!()
+        let hash = maybe_hash.unwrap_or(&*EMPTY_HASH);
+    
+        DEFAULT_HASHER.verify_password(password.as_bytes(), &hash.0.password_hash()).is_ok()
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_password_hashing_and_validation() {
+        
+        let password = "password";
+        let hash = hash(password);
+        assert!(verify(password, Some(&hash)));
+        assert!(!verify("wrong password", Some(&hash)));
+        assert!(!verify(password, None));
+        
+    }
+    
+}
+
