@@ -1,1 +1,9 @@
 p, read-data, r.sub.role == "Admin"
+p, create-folder, r.sub.id == r.obj.id
+p, delete-folder, r.sub.id == r.obj.id
+p, update-personal-info, r.sub.id == r.obj.id
+p, choose-doctors, r.sub.id == r.obj.id
+p, view-personal-data, r.sub.role == "Doctor" && r.obj.doctors.contains(r.sub.id)
+p, record-report, r.sub.role == "Doctor" && r.obj.medical_folder.is_some()
+p, view-report, r.sub.id == r.obj.author || (r.sub.role == "Doctor" && r.obj.patient.doctors.contains(r.sub.id))
+p, modify-report, r.sub.id == r.obj.author
