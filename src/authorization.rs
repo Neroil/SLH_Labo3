@@ -89,8 +89,8 @@ impl Context<'_> {
         )
     }
 
-    pub fn read_report(&self, report: &MedicalReport) -> CasbinResult {
-        self.enforce(report, "read-report")
+    pub fn read_report(&self, report: &MedicalReport, patient: &UserData) -> CasbinResult {
+        self.enforce(json!({"report": report, "patient": patient}), "read-report")
     }
 
     pub fn update_report(&self, report: &MedicalReport) -> CasbinResult {
