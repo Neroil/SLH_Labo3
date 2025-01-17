@@ -22,7 +22,6 @@ pub fn password_input_validation(username: &str) -> String {
     loop {
         eprintln!("Please enter a password.");
         let password = inquire::Password::new("Enter your password: ")
-            .with_display_mode(inquire::PasswordDisplayMode::Masked)
             .prompt()
             .unwrap();
 
@@ -106,5 +105,40 @@ impl TryFrom<String> for AVSNumber {
 }
 
 fn validate_avs_number(avs_number: &str) -> bool {
-    todo!()
+    //TODO
+
+    //Check if the AVS number starts with 756
+    if(avs_number.chars().take(3).collect::<String>() != "756"){
+        return false;
+    }
+    //Remove the dots
+    let avs_number_no_dot = avs_number.replace(".","");
+    
+    gtin_validate::gtin13::check(&avs_number_no_dot)
+    
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    
+    #[test]
+    fn test_validate_password(){
+        
+        
+    }
+
+    #[test]
+    fn test_validate_avs_number() {
+        // Valid AVS numbers
+        assert!(validate_avs_number("756.1234.5678.97"));
+        assert!(validate_avs_number("756.0905.7171.04"));
+        assert!(validate_avs_number("7561234567897"));
+
+        // Invalid AVS numbers
+        assert!(!validate_avs_number("123.4567.8901.23"));
+        assert!(!validate_avs_number("756.0905.7171.05"));
+        assert!(!validate_avs_number("756.1234.5678.98"));
+        assert!(!validate_avs_number("invalid_avs_number"));
+    }
 }
