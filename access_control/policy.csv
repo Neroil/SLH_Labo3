@@ -1,30 +1,30 @@
 # Admins ont tous les droits
-p, read-data, sub.role == "Admin"
-p, update-data, sub.role == "Admin"
-p, delete-data, sub.role == "Admin"
-p, add-report, sub.role == "Admin"
-p, read-report, sub.role == "Admin"
-p, update-report, sub.role == "Admin"
-p, update-role, sub.role == "Admin"
-p, add-doctor, sub.role == "Admin"
-p, remove-doctor, sub.role == "Admin"
+p, read-data, r.sub.role == "Admin"
+p, update-data, r.sub.role == "Admin"
+p, delete-data, r.sub.role == "Admin"
+p, add-report, r.sub.role == "Admin"
+p, read-report, r.sub.role == "Admin"
+p, update-report, r.sub.role == "Admin"
+p, update-role, r.sub.role == "Admin"
+p, add-doctor, r.sub.role == "Admin"
+p, remove-doctor, r.sub.role == "Admin"
 
 # Un utilisateur peut voir, créer, ou détruire son dossier personnel
-p, read-data, obj.id == sub.id
-p, update-data, obj.id == sub.id
-p, delete-data, obj.id == sub.id
+p, read-data, r.obj.id == r.sub.id
+p, update-data, r.obj.id == r.sub.id
+p, delete-data, r.obj.id == r.sub.id
 
 # Un utilisateur peut sélectionner ses médecins traitants
-p, add-doctor, obj.patient.id == sub.id
-p, remove-doctor, obj.patient.id == sub.id
+p, add-doctor, r.obj.patient.id == r.sub.id
+p, remove-doctor, r.obj.patient.id == r.sub.id
 
 # Médecin traitant peut voir le dossier et créer des rapports pour ses patients
-p, read-data, sub.role == "Doctor" && obj.medical_folder.doctors.contains(sub.id)
-p, add-report, sub.role == "Doctor" && obj.patient.medical_folder.doctors.contains(sub.id)
+p, read-data, r.sub.role == "Doctor" && r.obj.medical_folder.doctors.contains(r.sub.id)
+p, add-report, r.sub.role == "Doctor" && r.obj.patient.medical_folder.doctors.contains(r.sub.id)
 
 # Auteur d'un rapport peut voir et modifier ce rapport
-p, read-report, obj.report.author == sub.id
-p, update-report, obj.report.author == sub.id
+p, read-report, r.obj.report.author == r.sub.id
+p, update-report, r.obj.report.author == r.sub.id
 
 # Médecin peut voir les rapports de ses patients
-p, read-report, sub.role == "Doctor" && obj.patient.medical_folder.doctors.contains(sub.id)
+p, read-report, r.sub.role == "Doctor" && r.obj.patient.medical_folder.doctors.contains(r.sub.id)
