@@ -213,10 +213,15 @@ impl Service {
     pub fn list_reports(&self, user_id: UserID) -> impl Iterator<Item = &MedicalReport> + '_ {
         self.enforce().ok().into_iter().flat_map(move |ctx| {
             //TODO
-            
             self.db
                 .list_reports()
                 .filter(move |report| report.patient == user_id)
+                .filter(move |report|{
+                    let Ok(patient) = self.db.get_user(report.patient) else {
+                        return false
+                    };
+                    ctx.read_report(report,patient).is_ok()
+                })
         })
     }
 
