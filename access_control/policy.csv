@@ -14,17 +14,20 @@ p, read-data, r.obj.id == r.sub.id
 p, update-data, r.obj.id == r.sub.id
 p, delete-data, r.obj.id == r.sub.id
 
+# Un patient peut voir les rapports qui lui sont destinés
+p, read-report, r.obj.patient.id == r.sub.id
+
 # Un utilisateur peut sélectionner ses médecins traitants
-p, add-doctor, r.obj.patient.id == r.sub.id
-p, remove-doctor, r.obj.patient.id == r.sub.id
+p, add-doctor, r.obj.patient.id == r.sub.id && (r.obj.doctor.role == "Doctor" || r.obj.doctor.role == "Admin")
+p, remove-doctor, r.obj.patient.id == r.sub.id && (r.obj.doctor.role == "Doctor" || r.obj.doctor.role == "Admin")
 
 # Médecin traitant peut voir le dossier et créer des rapports pour ses patients
-p, read-data, r.sub.role == "Doctor" && r.obj.medical_folder.doctors.contains(r.sub.id)
-p, add-report, r.sub.role == "Doctor" && r.obj.patient.medical_folder.doctors.contains(r.sub.id)
+p, read-data, (r.sub.role == "Doctor" || r.sub.role == "Admin")&& r.sub.id in r.obj.medical_folder.doctors
+p, add-report, (r.sub.role == "Doctor" || r.sub.role == "Admin") && r.obj.patient.id == r.obj.report.patient && r.obj.patient.medical_folder != ()
 
 # Auteur d'un rapport peut voir et modifier ce rapport
 p, read-report, r.obj.report.author == r.sub.id
-p, update-report, r.obj.report.author == r.sub.id
+p, update-report, r.obj.author == r.sub.id
 
 # Médecin peut voir les rapports de ses patients
-p, read-report, r.sub.role == "Doctor" && r.obj.patient.medical_folder.doctors.contains(r.sub.id)
+p, read-report, (r.sub.role == "Doctor" || r.sub.role == "Admin") && r.sub.id in r.obj.patient.medical_folder.doctors

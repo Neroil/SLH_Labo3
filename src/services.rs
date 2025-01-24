@@ -184,6 +184,13 @@ impl Service {
         title: String,
         content: String,
     ) -> Result<(), ServiceError> {
+        // Vérifier d'abord si le patient existe et a un dossier médical
+        let patient_data = self.db.get_user(patient)?;
+        if patient_data.medical_folder.is_none() {
+            return Err(ServiceError::NotAPatient);
+        }
+
+        // Créer le rapport
         let report = MedicalReport {
             id: ReportID::new(),
             title,
@@ -192,22 +199,14 @@ impl Service {
             content,
         };
 
-        // TODO
-        let ctx = self.enforce()?; // Enforce some policy, returns a Result
+        // Vérifier les permissions
+        let ctx = self.enforce()?;
+        ctx.add_report(patient_data, &report)?;
 
-        let patient_data = self.db.get_user(patient)?;
-        if patient_data.medical_folder.is_none() {
-            return Err(ServiceError::NotAPatient);
-        }
-
-        // Add the report to the context
-        ctx.add_report(&patient_data, &report)?;
-
-        // Store the report
+        // Si tout est OK, stocker le rapport dans la base de données
         self.db.store_report(report);
 
         Ok(())
-
     }
 
     pub fn list_reports(&self, user_id: UserID) -> impl Iterator<Item = &MedicalReport> + '_ {
@@ -273,6 +272,7 @@ impl Service {
         report_id: ReportID,
         content: String,
     ) -> Result<(), ServiceError> {
+        
         let report = self
             .db
             .get_report(report_id)
