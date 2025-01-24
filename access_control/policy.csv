@@ -1,9 +1,30 @@
-p, read-data, r.sub.role == "Admin"
-p, create-folder, r.sub.id == r.obj.id
-p, delete-folder, r.sub.id == r.obj.id
-p, update-personal-info, r.sub.id == r.obj.id
-p, choose-doctors, r.sub.id == r.obj.id
-p, view-personal-data, r.sub.role == "Doctor" && r.obj.doctors.contains(r.sub.id)
-p, record-report, r.sub.role == "Doctor" && r.obj.medical_folder.is_some()
-p, view-report, r.sub.id == r.obj.author || (r.sub.role == "Doctor" && r.obj.patient.doctors.contains(r.sub.id))
-p, modify-report, r.sub.id == r.obj.author
+# Admins ont tous les droits
+p, read-data, sub.role == "Admin"
+p, update-data, sub.role == "Admin"
+p, delete-data, sub.role == "Admin"
+p, add-report, sub.role == "Admin"
+p, read-report, sub.role == "Admin"
+p, update-report, sub.role == "Admin"
+p, update-role, sub.role == "Admin"
+p, add-doctor, sub.role == "Admin"
+p, remove-doctor, sub.role == "Admin"
+
+# Un utilisateur peut voir, créer, ou détruire son dossier personnel
+p, read-data, obj.id == sub.id
+p, update-data, obj.id == sub.id
+p, delete-data, obj.id == sub.id
+
+# Un utilisateur peut sélectionner ses médecins traitants
+p, add-doctor, obj.patient.id == sub.id
+p, remove-doctor, obj.patient.id == sub.id
+
+# Médecin traitant peut voir le dossier et créer des rapports pour ses patients
+p, read-data, sub.role == "Doctor" && obj.medical_folder.doctors.contains(sub.id)
+p, add-report, sub.role == "Doctor" && obj.patient.medical_folder.doctors.contains(sub.id)
+
+# Auteur d'un rapport peut voir et modifier ce rapport
+p, read-report, obj.report.author == sub.id
+p, update-report, obj.report.author == sub.id
+
+# Médecin peut voir les rapports de ses patients
+p, read-report, sub.role == "Doctor" && obj.patient.medical_folder.doctors.contains(sub.id)

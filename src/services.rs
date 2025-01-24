@@ -116,14 +116,27 @@ impl Service {
 
     /// Change le role d'un utilisateur
     pub fn update_role(&mut self, user_id: UserID, new_role: Role) -> Result<(), ServiceError> {
-        // TODO
+        //TODO
+        // Vérifie que l'utilisateur courant à le droit de modifier les rôles
+        let ctx = self.enforce()?;
+        ctx.update_role(self.db.get_user(user_id)?,new_role)?;
+        
+
+        // Récupère l'utilisateur cible et met à jour son rôle
+        let user = self.db.get_user_mut(user_id)?;
+        user.role = new_role;
+
         Ok(())
     }
 
     /// Récupère les données d'un utilisateur
     pub fn get_data(&self, user_id: UserID) -> Result<&UserData, ServiceError> {
         // TODO
-        Ok(todo!())
+        self.enforce()?;
+
+        let user_data = self.db.get_user(user_id)?;
+        
+        Ok(user_data)
     }
 
     /// Change les données personnelles d'un utilisateur. Si le dossier médical
@@ -134,6 +147,10 @@ impl Service {
         personal_data: PersonalData,
     ) -> Result<(), ServiceError> {
         // TODO
+        let ctx = self.enforce()?;
+        let user = self.db.get_user(user_id)?;
+        ctx.update_data(user)?;
+        
         let folder = &mut self.db.get_user_mut(user_id)?.medical_folder;
 
         if let Some(folder) = folder {
@@ -149,6 +166,11 @@ impl Service {
     /// affecté)
     pub fn delete_data(&mut self, patient: UserID) -> Result<(), ServiceError> {
         // TODO
+        let ctx = self.enforce()?;
+        let data = self.db.get_user(patient)?;
+        
+        ctx.delete_data(data)?;
+        
         self.db.get_user_mut(patient)?.medical_folder = None;
         self.db.remove_reports(patient);
         Ok(())
@@ -171,16 +193,30 @@ impl Service {
         };
 
         // TODO
+        let ctx = self.enforce()?; // Enforce some policy, returns a Result
 
+        let patient_data = self.db.get_user(patient)?;
+        if patient_data.medical_folder.is_none() {
+            return Err(ServiceError::NotAPatient);
+        }
+
+        // Add the report to the context
+        ctx.add_report(&patient_data, &report)?;
+
+        // Store the report
         self.db.store_report(report);
+
         Ok(())
+
     }
 
     pub fn list_reports(&self, user_id: UserID) -> impl Iterator<Item = &MedicalReport> + '_ {
         self.enforce().ok().into_iter().flat_map(move |ctx| {
+            //TODO
+            
             self.db
                 .list_reports()
-                // TODO use .filter() here for access control
+                .filter(move |report| report.patient == user_id)
         })
     }
 
@@ -197,6 +233,10 @@ impl Service {
         doctor_id: UserID,
     ) -> Result<(), ServiceError> {
         // TODO
+        let ctx = self.enforce()?;
+        
+        ctx.add_doctor(self.db.get_user(patient_id)?, self.db.get_user(doctor_id)?)?;
+        
         let patient = self.db.get_user_mut(patient_id)?;
         patient
             .medical_folder
@@ -211,6 +251,10 @@ impl Service {
         doctor_id: UserID,
     ) -> Result<(), ServiceError> {
         // TODO
+        let ctx = self.enforce()?;
+        
+        ctx.remove_doctor(self.db.get_user(patient_id)?, self.db.get_user(doctor_id)?)?;
+        
         let patient = self.db.get_user_mut(patient_id)?;
         patient
             .medical_folder
@@ -234,3 +278,5 @@ impl Service {
         Ok(())
     }
 }
+
+
