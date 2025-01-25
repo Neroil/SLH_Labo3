@@ -6,13 +6,6 @@ use zxcvbn::Score::Three;
 
 extern crate zxcvbn;
 
-// Added for testing purposes
-impl Username {
-    pub fn new(username: String) -> Username {
-        Username(username)
-    }
-}
-
 /// This function checks if the given password is valid
 /// Returns true if the password is strong enough, false otherwise
 fn password_validation(password: &str, username: &str) -> bool {
