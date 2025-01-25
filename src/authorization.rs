@@ -109,3 +109,145 @@ impl Context<'_> {
         self.enforce(json!({"patient": target, "doctor": doctor}), "remove-doctor")
     }
 }
+
+
+#[cfg(test)]
+mod test {
+    use super::*;
+    use crate::models::{BloodType, PersonalData, Role, UserData, UserID, MedicalReport, ReportID, MedicalFolder};
+    use crate::utils::input_validation::{AVSNumber, Username};
+    use crate::utils::password_utils::{hash, PWHash};
+
+    fn create_test_user(id: UserID, username: &str, role: Role, has_folder: bool) -> UserData {
+        let medical_folder = if has_folder {
+            Some(MedicalFolder {
+                personal_data: PersonalData {
+                    avs_number: AVSNumber::try_from("756.1234.5678.97".to_string()).unwrap(),
+                    blood_type: BloodType::A,
+                },
+                doctors: Default::default(),
+            })
+        } else {
+            None
+        };
+
+        UserData {
+            id,
+            role,
+            username: Username::new(username.to_string()),
+            password: hash("dummy"),
+            medical_folder,
+        }
+    }
+
+    fn setup() -> (Enforcer, UserData, UserData, UserData) {
+        let enforcer = Enforcer::load().unwrap();
+
+        let admin = create_test_user(UserID::new(), "admin", Role::Admin, false);
+        let patient = create_test_user(UserID::new(), "patient", Role::Patient, true);
+        let doctor = create_test_user(UserID::new(), "doctor", Role::Doctor, false);
+
+        (enforcer, admin, patient, doctor)
+    }
+
+    #[test]
+    fn test_admin_permissions() {
+        let (enforcer, admin, patient, _) = setup();
+        let ctx = enforcer.with_subject(&admin);
+
+        // Admin should be able to read any user's data
+        assert!(ctx.read_data(&patient).is_ok());
+
+        // Admin should be able to update roles
+        assert!(ctx.update_role(&patient, Role::Doctor).is_ok());
+    }
+
+    #[test]
+    fn test_patient_permissions() {
+        let (enforcer, _, patient, doctor) = setup();
+        let ctx = enforcer.with_subject(&patient);
+
+        // Patient should be able to read their own data
+        assert!(ctx.read_data(&patient).is_ok());
+
+        // Patient should be able to update their own data
+        assert!(ctx.update_data(&patient).is_ok());
+
+        // Patient should be able to delete their own data
+        assert!(ctx.delete_data(&patient).is_ok());
+
+        // Patient should be able to add doctors
+        assert!(ctx.add_doctor(&patient, &doctor).is_ok());
+
+        // Patient should not be able to read other patient's data
+        let other_patient = create_test_user(UserID::new(), "other", Role::Patient, true);
+        assert!(ctx.read_data(&other_patient).is_err());
+    }
+
+    #[test]
+    fn test_doctor_permissions() {
+        let (enforcer, _, patient, doctor) = setup();
+        let ctx = enforcer.with_subject(&doctor);
+
+        // Create a test report
+        let report = MedicalReport {
+            id: ReportID::new(),
+            title: "Test Report".to_string(),
+            author: doctor.id,
+            patient: patient.id,
+            content: "Test content".to_string(),
+        };
+
+        // Doctor should be able to add reports
+        assert!(ctx.add_report(&patient, &report).is_ok());
+
+        // Doctor should be able to read their own reports
+        assert!(ctx.read_report(&report, &patient).is_ok());
+
+        // Doctor should be able to update their own reports
+        assert!(ctx.update_report(&report).is_ok());
+    }
+
+    #[test]
+    fn test_unauthorized_access() {
+        let (enforcer, _, patient, _) = setup();
+        let other_patient = create_test_user(UserID::new(), "other", Role::Patient, true);
+        let ctx = enforcer.with_subject(&other_patient);
+
+        // Other patient should not be able to read patient's data
+        assert!(ctx.read_data(&patient).is_err());
+
+        // Other patient should not be able to update patient's data
+        assert!(ctx.update_data(&patient).is_err());
+
+        // Other patient should not be able to delete patient's data
+        assert!(ctx.delete_data(&patient).is_err());
+    }
+
+    #[test]
+    fn test_doctor_patient_relationship() {
+        let (enforcer, _, mut patient, doctor) = setup();
+
+        // Add doctor to patient's medical folder
+        if let Some(ref mut folder) = patient.medical_folder {
+            folder.doctors.insert(doctor.id);
+        }
+
+        let ctx = enforcer.with_subject(&doctor);
+
+        // Doctor should be able to read their patient's data
+        assert!(ctx.read_data(&patient).is_ok());
+
+        // Create a test report
+        let report = MedicalReport {
+            id: ReportID::new(),
+            title: "Test Report".to_string(),
+            author: doctor.id,
+            patient: patient.id,
+            content: "Test content".to_string(),
+        };
+
+        // Doctor should be able to read reports of their patients
+        assert!(ctx.read_report(&report, &patient).is_ok());
+    }
+}
