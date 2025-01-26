@@ -75,7 +75,6 @@ fn username_validation(username: &str) -> Result<(), InvalidInput> {
 }
 
 pub fn username_input_validation(message: &str) -> Result<Username, InvalidInput> {
-    //TODO
     loop {
         let username = inquire::Text::new(message)
             .prompt()
@@ -109,7 +108,7 @@ impl TryFrom<String> for AVSNumber {
 fn validate_avs_number(avs_number: &str) -> bool {
 
     //Check if the AVS number starts with 756
-    if(avs_number.chars().take(3).collect::<String>() != "756"){
+    if avs_number.chars().take(3).collect::<String>() != "756" {
         return false;
     }
     //Remove the dots
@@ -122,11 +121,26 @@ fn validate_avs_number(avs_number: &str) -> bool {
 #[cfg(test)]
 mod tests {
     use super::*;
-    
+
     #[test]
-    fn test_validate_password(){
+    fn test_validate_password() {
+        let valid_username = "valid_user";
+        let valid_but_unrelated_username = "chasseur";
+        let strong_password = "Str0ngP@ssw0rd!";
+        let weak_password = "123";
+        let weak_password_because_of_username = "valid_user1!##d";
+
+        // Test strong password
+        assert!(password_validation(strong_password, valid_username));
+
+        // Test weak password
+        assert!(!password_validation(weak_password, valid_username));
         
+        // Test weak password because of username
+        assert!(!password_validation(weak_password_because_of_username, valid_username));
         
+        // Making sure the other test wasn't a fluke
+        assert!(password_validation(weak_password_because_of_username, valid_but_unrelated_username));
     }
 
     #[test]
