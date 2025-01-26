@@ -16,14 +16,12 @@ impl Username {
 /// This function checks if the given password is valid
 /// Returns true if the password is strong enough, false otherwise
 fn password_validation(password: &str, username: &str) -> bool {
-    //TODO: Implement password validation
     let estimated_strength = zxcvbn::zxcvbn(password, &[username]);
-    estimated_strength.score() >= Three //Hope this works lol
+    estimated_strength.score() >= Three
 }
 
 /// Interactively prompts the user for a password
 pub fn password_input_validation(username: &str) -> String {
-    //TODO: Implement password input validation
     loop {
         eprintln!("Please enter a password.");
         let password = inquire::Password::new("Enter your password: ")
@@ -70,7 +68,6 @@ impl AsRef<str> for Username {
 }
 
 fn username_validation(username: &str) -> Result<(), InvalidInput> {
-    //TODO
     if username.len() < 3 || username.len() > 30 || regex_match(r"^[a-zA-Z0-9_-]+$",username){
         return Err(InvalidInput);
     }
@@ -110,7 +107,6 @@ impl TryFrom<String> for AVSNumber {
 }
 
 fn validate_avs_number(avs_number: &str) -> bool {
-    //TODO
 
     //Check if the AVS number starts with 756
     if(avs_number.chars().take(3).collect::<String>() != "756"){

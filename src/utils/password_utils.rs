@@ -1,6 +1,6 @@
 //! Hachage et vérification des mots de passe
 
-use argon2::{password_hash::{rand_core::OsRng, PasswordHashString, PasswordVerifier, SaltString}, Argon2, PasswordHash, PasswordHasher};
+use argon2::{password_hash::{rand_core::OsRng, PasswordHashString, PasswordVerifier, SaltString}, Argon2, PasswordHasher};
 use derive_more::derive::Display;
 use serde::{Deserialize, Serialize};
 use std::{str::FromStr, sync::LazyLock};
@@ -38,7 +38,6 @@ impl<'de> Deserialize<'de> for PWHash {
 
 /// Calcule un haché a partir d'un mot de passe en clair, en choisissant un sel au hasard
 pub fn hash(password: &str) -> PWHash {
-    //TODO
     let salt = SaltString::generate(&mut OsRng);
     
     PWHash(DEFAULT_HASHER.hash_password(password.as_bytes(), &salt).unwrap().serialize())

@@ -116,8 +116,6 @@ impl Service {
 
     /// Change le role d'un utilisateur
     pub fn update_role(&mut self, user_id: UserID, new_role: Role) -> Result<(), ServiceError> {
-        //TODO
-        // Vérifie que l'utilisateur courant à le droit de modifier les rôles
         let ctx = self.enforce()?;
         ctx.update_role(self.db.get_user(user_id)?,new_role)?;
         
@@ -131,7 +129,6 @@ impl Service {
 
     /// Récupère les données d'un utilisateur
     pub fn get_data(&self, user_id: UserID) -> Result<&UserData, ServiceError> {
-        // TODO
         self.enforce()?;
 
         let user_data = self.db.get_user(user_id)?;
@@ -146,7 +143,6 @@ impl Service {
         user_id: UserID,
         personal_data: PersonalData,
     ) -> Result<(), ServiceError> {
-        // TODO
         let ctx = self.enforce()?;
         let user = self.db.get_user(user_id)?;
         ctx.update_data(user)?;
@@ -165,7 +161,6 @@ impl Service {
     /// (S'il est également médecin, son rôle de médecin n'est pas
     /// affecté)
     pub fn delete_data(&mut self, patient: UserID) -> Result<(), ServiceError> {
-        // TODO
         let ctx = self.enforce()?;
         let data = self.db.get_user(patient)?;
         
@@ -199,11 +194,9 @@ impl Service {
             content,
         };
 
-        // Vérifier les permissions
         let ctx = self.enforce()?;
         ctx.add_report(patient_data, &report)?;
-
-        // Si tout est OK, stocker le rapport dans la base de données
+        
         self.db.store_report(report);
 
         Ok(())
@@ -211,7 +204,6 @@ impl Service {
 
     pub fn list_reports(&self, user_id: UserID) -> impl Iterator<Item = &MedicalReport> + '_ {
         self.enforce().ok().into_iter().flat_map(move |ctx| {
-            //TODO
             self.db
                 .list_reports()
                 .filter(move |report| report.patient == user_id)
@@ -236,7 +228,6 @@ impl Service {
         patient_id: UserID,
         doctor_id: UserID,
     ) -> Result<(), ServiceError> {
-        // TODO
         let ctx = self.enforce()?;
         
         ctx.add_doctor(self.db.get_user(patient_id)?, self.db.get_user(doctor_id)?)?;
@@ -254,7 +245,6 @@ impl Service {
         patient_id: UserID,
         doctor_id: UserID,
     ) -> Result<(), ServiceError> {
-        // TODO
         let ctx = self.enforce()?;
         
         ctx.remove_doctor(self.db.get_user(patient_id)?, self.db.get_user(doctor_id)?)?;
